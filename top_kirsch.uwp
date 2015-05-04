@@ -1,0 +1,6 @@
+DESIGN_ENTITY = top_kirsch
+DESIGN_ARCH = main
+DESIGN_VHDL = mem.vhd kirsch_synth_pkg.vhd kirsch.vhd lib_kirsch.vhd top_kirsch.vhd
+
+PIN_FILE      = pins-DE2.tcl
+
