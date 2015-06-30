@@ -113,6 +113,18 @@ begin
 
   memCol <= index (7 downto 0);
 
+
+  compute : process begin
+    wait until rising_edge(i_clock);
+
+    if ((matrixRow > 1) and ((memCol > 0) and (memCol < 255))) then
+      
+    end if;
+  end process;
+
+
+  o_row <= matrixRow;
+
   debug_num_5 <= X"E";
   debug_num_4 <= X"C";
   debug_num_3 <= X"E";
