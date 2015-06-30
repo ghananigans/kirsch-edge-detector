@@ -1,0 +1,6 @@
+LOG/*
+RPT/*
+modelsim.ini
+uw_tmp/*
+work-msim/*
+!.gitignore
