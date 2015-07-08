@@ -293,7 +293,7 @@ begin
       
       if (stage4_v(0) = '1') then
          stage4_max(13 downto 11) <= "000";
-         stage4_max(10 downto 0) <= signed(((stage2_sum & '0') + (stage2_sum)));
+         stage4_max(10 downto 0) <= signed(stage2_sum & '0') + signed('0' & stage2_sum);
 
       elsif (stage4_v(1) = '1') then
         stage4_max <= signed('0' & stage3_max) - stage4_max;
