@@ -52,19 +52,22 @@ architecture main of kirsch is
   signal a, b, c, d, e, f, g, h, i : unsigned(9 downto 0);
 
   signal stage1_v, stage2_v, stage3_v : std_logic_vector(3 downto 0); 
-  signal stage4_v : std_logic_vector(1 downto 0);
+  signal stage4_v : std_logic_vector(2 downto 0);
 
   signal stage1_max : unsigned (9 downto 0);
-  signal stage1_max_dir : unsigned (2 downto 0);
+  signal stage1_max_dir : std_logic_vector (2 downto 0);
   signal stage1_sum : unsigned(9 downto 0);
 
   signal stage2_max : unsigned (9 downto 0);
-  signal stage2_max_dir : unsigned (2 downto 0);
+  signal stage2_max_dir : std_logic_vector (2 downto 0);
   signal stage2_sum : unsigned(9 downto 0);
 
-  signal stage3_max : unsigned (9 downto 0);
-  signal stage3_max_dir : unsigned (2 downto 0);
+  signal stage3_max : unsigned (12 downto 0);
+  signal stage3_max_dir : std_logic_vector (2 downto 0);
  
+  signal stage4_max : unsigned (12 downto 0);
+  signal stage4_max_dir : std_logic_vector (2 downto 0);
+
   function "rol" (a : std_logic_vector; n : natural)
     return std_logic_vector
   is
@@ -266,18 +269,33 @@ begin
 
     if (i_reset = '1') then
       stage3_v <= "0000";
+      stage3_max(2 downto 0) <= "000";
     else
       stage3_v <= "sll"(stage2_v, 1);
 
       stage3_v(0) <= stage2_v(0);
 
       if (stage3_v(0) = '1') then
+	stage3_max(12 downto 3) <= stage2_max;
+	stage3_max_dir <= stage2_max_dir;
 
       elsif (stage3_v(1) = '1') then
-
+	if(stage2_max > stage3_max) then
+		stage3_max(12 downto 3) <= stage2_max;
+		stage3_max_dir <= stage2_max_dir;
+	end if;
+		
       elsif (stage3_v(2) = '1') then
+	if(stage2_max > stage3_max) then
+		stage3_max(12 downto 3) <= stage2_max;
+                stage3_max_dir <= stage2_max_dir;
+        end if;
 
       elsif (stage3_v(3) = '1') then
+        if(stage2_max > stage3_max) then
+                stage3_max(12 downto 3) <= stage2_max;
+                stage3_max_dir <= stage2_max_dir;
+        end if;
 
       end if;
     end if;
@@ -290,19 +308,33 @@ begin
 
     valid <= '0';
     if (i_reset = '1') then
-      stage4_v <= "00";
+      stage4_v <= "000";
     else
       stage4_v <= "sll"(stage4_v, 1);
 
-      stage4_v(0) <= stage3_v(3);
+      stage4_v(0) <= stage2_v(3);
       
       if (stage4_v(0) = '1') then
-
+         stage4_max <= "00" & ((stage2_sum & '0') + stage2_sum);
+	 
       elsif (stage4_v(1) = '1') then
-        valid <= '1';
-        edge_exists <= '0';
-        dir <= "000";
-      end if;
+
+        stage4_max <= stage3_max - stage4_max;
+	stage4_max_dir <= stage3_max_dir;
+
+      
+      elsif (stage4_v(2) = '1') then
+	valid <= '1';
+
+	if(stage4_max > 383) then
+		edge_exists <= '1';
+		dir <= stage4_max_dir;
+	else
+		edge_exists <= '0';	
+		dir <= "000";
+	end if;
+
+    end if;
     end if;
   end process;
   o_edge <= edge_exists;

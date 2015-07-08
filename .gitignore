@@ -3,6 +3,9 @@ RPT/*
 modelsim.ini
 uw_tmp/*
 work-msim/*
+tests/*.ted
+transcript
+latency.txt
 !.gitignore
 ~$*
 */~$*
