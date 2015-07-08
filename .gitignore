@@ -10,6 +10,7 @@ latency.txt
 tests/*
 top_kirsch.sof
 .*
+stratixii/
 altera_mf/
 cycloneii/
 ~$*
