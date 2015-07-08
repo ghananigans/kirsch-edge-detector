@@ -35,95 +35,134 @@ end entity;
 
 
 architecture main of kirsch is
-  signal index : unsigned (15 downto 0);
-  signal receivedNumbers : unsigned (15 downto 0);
+  signal mode : std_logic_vector(1 downto 0);
+  signal dir : std_logic_vector(2 downto 0);
+  signal edge_exists : std_logic;
+  signal valid : std_logic;
+  signal busy : std_logic;
 
-  signal pixel : std_logic_vector(7 downto 0);
+  signal mem_wren : std_logic_vector(2 downto 0);
 
-  subtype vec_unsigned_8 is unsigned(7 downto 0);
-  type vec_vec_unsigned_8 is array (2 downto 0) of vec_unsigned_8;
-  signal memq : vec_vec_unsigned_8;
+  subtype vec is unsigned(7 downto 0);
+  type vec_vec is array (2 downto 0) of vec;
+  signal mem_q : vec_vec;
 
-  signal memwren : std_logic_vector (2 downto 0);
+  signal matrix_col, matrix_row : unsigned(7 downto 0);
+  signal receivedNumbers : unsigned(15 downto 0);
 
-  signal memRow, memRow2 :unsigned (1 downto 0);
-  signal memCol : unsigned (7 downto 0);
+  signal row1pixel, row2pixel : unsigned(7 downto 0);  
 
-  signal matrixRow, matrixCol : unsigned (7 downto 0);
-begin 
+  signal a, b, c, d, e, f, g, h, i : unsigned(9 downto 0);
 
-  memory : for i in 0 to 2 generate
-    memBlock : entity work.mem(main)
-    port map (
-      clock => i_clock,
-      address => std_logic_vector(memCol),
-      wren => memwren(i),
-      unsigned(q) => memq(i),
-      data => std_logic_vector(pixel)
-   );
-  end generate memory;
-
- 
-  pixel_receive_buffer : process begin
-    wait until rising_edge(i_clock);
-
-    if (i_valid = '1') then
-      pixel <= i_pixel;
-    end if;
-  end process;
-
-
-  write_to_mem : process begin
-    wait until rising_edge(i_clock);
-
-    if (i_reset = '1') then
-      --reset
-      index <= X"FFFF";
-      memRow <= "10";
-      memRow2 <= "00";
-      memwren <= "000";
-    elsif (i_valid = '1') then
-      memwren(to_integer(memRow2)) <= '1';
-      index <= receivedNumbers;
-
-      if (memCol = 255) then
-        if (memRow = 2) then
-          memRow <= "00";
-        else
-          memRow <= memRow + 1;
-        end if;
-      end if;
-
-      if (memCol = 254) then
-        if (memRow2 = 2) then
-          memRow2 <= "00";
-        else
-          memRow2 <= memRow2 + 1;
-        end if;
-      end if;
-    else
-      memwren <= "000";
-    end if;
-  end process;
-
-  receivedNumbers <= index + 1;
   
-  matrixCol <= index (7 downto 0);
-  matrixRow <= index (15 downto 8);
+  function "rol" (a : std_logic_vector; n : natural)
+    return std_logic_vector
+  is
+  begin
+    return std_logic_vector(unsigned(a) rol n);
+  end function;
+begin  
+  memory: for i in 0 to 2 generate
+    mem: entity work.mem(main)
+    port map (
+      address => std_logic_vector(matrix_col),
+      clock => i_clock,
+      data => i_pixel,
+      wren => mem_wren(i),
+      unsigned(q) => mem_q(i)
+    );
+  end generate;
 
-  memCol <= index (7 downto 0);
-
-
-  compute : process begin
+  memory_writing: process begin
     wait until rising_edge(i_clock);
+    
+    if (i_reset = '1') then
+      receivedNumbers <= X"0000";
+      mem_wren <= "001";
+      busy <= '0';
+    elsif (i_valid = '1') then
+      receivedNumbers <= receivedNumbers + 1; 
+      busy <= '1'; 
 
-    if ((matrixRow > 1) and ((memCol > 0) and (memCol < 255))) then
-      
+      if (matrix_col = 255) then
+        mem_wren <= "rol"(mem_wren, 1);
+        
+        if (matrix_row = 255) then
+          busy <= '0';
+        end if;
+      end if;
+    end if;
+  end process;
+  matrix_col <= receivedNumbers (7 downto 0);
+  matrix_row <= receivedNumbers (15 downto 8);
+  o_row <= std_logic_vector(matrix_row);
+
+
+  get_pixel_from_memory : process(mem_q, mem_wren) begin
+    case mem_wren is
+      when "001" =>
+        row1pixel <= mem_q(1);
+        row2pixel <= mem_q(2);
+      when "010" =>
+        row1pixel <= mem_q(2);
+        row2pixel <= mem_q(0);
+      when "100" =>
+        row1pixel <= mem_q(0);
+        row2pixel <= mem_q(1);
+      when others =>
+        row1pixel <= X"00";
+        row2pixel <= X"00"; 
+    end case;
+  end process;
+
+
+
+  convolution_table : process begin
+    wait until rising_edge(i_clock);
+  
+    if (i_valid = '1') then
+      a <= b;
+      b <= c;
+      d <= e;
+      e <= f;
+      g <= h;
+      h <= i;
+
+      --add new stuff to the convulution table
+      c <= "00" & row1pixel;
+      f <= "00" & row2pixel;
+      i <= "00" & unsigned(i_pixel);
     end if;
   end process;
 
 
-  o_row <= matrixRow;
+
+  system_mode : process begin
+    wait until rising_edge(i_clock);
+ 
+    if (i_reset = '1') then 
+      mode <= "01";
+    elsif (busy = '1') then
+      mode <= "11";
+    else
+      mode <= "10";
+    end if;
+  end process;
+  o_mode <= mode;
+
+
+  computation : process begin
+    wait until rising_edge(i_clock);
+    
+    if (i_reset = '1') then
+      valid <= '0';
+    else
+
+    end if;
+  end process;
+  o_edge <= edge_exists;
+  o_dir <= dir;
+  o_valid <= valid;
 
   debug_num_5 <= X"E";
   debug_num_4 <= X"C";
