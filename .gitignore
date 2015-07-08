@@ -7,6 +7,11 @@ tests/*.ted
 transcript
 latency.txt
 !.gitignore
+tests/*
+top_kirsch.sof
+.*
+altera_mf/
+cycloneii/
 ~$*
 */~$*
 

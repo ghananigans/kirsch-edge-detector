@@ -271,30 +271,30 @@ begin
       stage3_v <= "0000";
       stage3_max(2 downto 0) <= "000";
     else
-      stage3_v <= "sll"(stage2_v, 1);
+      stage3_v <= "sll"(stage3_v, 1);
 
       stage3_v(0) <= stage2_v(0);
 
       if (stage3_v(0) = '1') then
-	stage3_max(12 downto 3) <= stage2_max;
-	stage3_max_dir <= stage2_max_dir;
+	      stage3_max(12 downto 3) <= stage2_max;
+	      stage3_max_dir <= stage2_max_dir;
 
       elsif (stage3_v(1) = '1') then
-	if(stage2_max > stage3_max) then
-		stage3_max(12 downto 3) <= stage2_max;
-		stage3_max_dir <= stage2_max_dir;
-	end if;
+	      if(stage2_max > (stage3_max(12 downto 3))) then
+		      stage3_max(12 downto 3) <= stage2_max;
+		      stage3_max_dir <= stage2_max_dir;
+      	end if;
 		
       elsif (stage3_v(2) = '1') then
-	if(stage2_max > stage3_max) then
-		stage3_max(12 downto 3) <= stage2_max;
-                stage3_max_dir <= stage2_max_dir;
+	      if(stage2_max > (stage3_max(12 downto 3))) then
+		      stage3_max(12 downto 3) <= stage2_max;
+          stage3_max_dir <= stage2_max_dir;
         end if;
 
       elsif (stage3_v(3) = '1') then
-        if(stage2_max > stage3_max) then
-                stage3_max(12 downto 3) <= stage2_max;
-                stage3_max_dir <= stage2_max_dir;
+        if(stage2_max > (stage3_max(12 downto 3))) then
+          stage3_max(12 downto 3) <= stage2_max;
+          stage3_max_dir <= stage2_max_dir;
         end if;
 
       end if;
@@ -311,30 +311,26 @@ begin
       stage4_v <= "000";
     else
       stage4_v <= "sll"(stage4_v, 1);
-
       stage4_v(0) <= stage2_v(3);
       
       if (stage4_v(0) = '1') then
          stage4_max <= "00" & ((stage2_sum & '0') + stage2_sum);
-	 
+
       elsif (stage4_v(1) = '1') then
-
         stage4_max <= stage3_max - stage4_max;
-	stage4_max_dir <= stage3_max_dir;
-
+	      stage4_max_dir <= stage3_max_dir;
       
       elsif (stage4_v(2) = '1') then
-	valid <= '1';
+        valid <= '1';
 
-	if(stage4_max > 383) then
-		edge_exists <= '1';
-		dir <= stage4_max_dir;
-	else
-		edge_exists <= '0';	
-		dir <= "000";
-	end if;
-
-    end if;
+        if(stage4_max > 383) then
+	        edge_exists <= '1';
+	        dir <= stage4_max_dir;
+	      else
+	        edge_exists <= '0';	
+	        dir <= "000";
+	      end if;
+      end if;
     end if;
   end process;
   o_edge <= edge_exists;
