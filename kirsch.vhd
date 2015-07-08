@@ -185,13 +185,12 @@ begin
   stage2 : process begin
     wait until rising_edge(i_clock);
     
-    valid <= '0';
     if (i_reset = '1') then
       stage2_v <= "0000";
     else
       stage2_v <= "sll"(stage2_v, 1);
 
-      stage2_v(0) <= stage1_v(3);
+      stage2_v(0) <= stage1_v(0);
 
       if (stage2_v(0) = '1') then
          
@@ -200,15 +199,38 @@ begin
       elsif (stage2_v(2) = '1') then
 
       elsif (stage2_v(3) = '1') then
-        valid <= '1';
-        edge_exists <= '0';
-        dir <= "000";
+
+      end if;
+    end if;
+  end process;
+
+
+
+  stage3 : process begin
+    wait until rising_edge(i_clock);
+
+    valid = '0';
+    if (i_reset = '1') then
+      stage3_v <= "00";
+    else
+      stave3_v <= "sll"(stage3_v, 1);
+
+      stage3_v(0) <= stage2_v(3);
+      
+      if (stage3_v(0) = '1') then
+
+      elsif (stage3_v(1) = '1') then
+        valid = '1';
+        edge_exists = '0';
+        dir = "000";
       end if;
     end if;
   end process;
   o_edge <= edge_exists;
   o_dir <= dir;
   o_valid <= valid;
+
+
 
   debug_num_5 <= X"E";
   debug_num_4 <= X"C";
