@@ -54,12 +54,21 @@ architecture main of kirsch is
 
   signal a, b, c, d, e, f, g, h, i : unsigned(9 downto 0);
 
-  
+  signal stage1_v, stage2_v : std_logic_vector(3 downto 0); 
+
+ 
   function "rol" (a : std_logic_vector; n : natural)
     return std_logic_vector
   is
   begin
     return std_logic_vector(unsigned(a) rol n);
+  end function;
+
+  function "sll" (a : std_logic_vector; n : natural)
+    return std_logic_vector
+  is
+  begin
+    return std_logic_vector(unsigned(a) sll n);
   end function;
 begin  
   memory: for i in 0 to 2 generate
@@ -151,13 +160,54 @@ begin
   o_mode <= mode;
 
 
-  computation : process begin
+  stage1 : process begin
     wait until rising_edge(i_clock);
     
     if (i_reset = '1') then
-      valid <= '0';
+      stage1_v <= "0000";
     else
+      stage1_v <= "sll"(stage1_v, 1);
+      
+      if ((i_valid = '1') and ((matrix_row > 1) and (matrix_col > 1)))  then
+        stage1_v(0) <= '1';
+      end if;
 
+      if (stage1_v(0) = '1') then
+
+      elsif (stage1_v(1) = '1') then
+
+      elsif (stage1_v(2) = '1') then
+
+      elsif (stage1_v(3) = '1') then
+
+      end if;
+    end if;
+  end process;
+
+
+
+  stage2 : process begin
+    wait until rising_edge(i_clock);
+    
+    valid <= '0';
+    if (i_reset = '1') then
+      stage2_v <= "0000";
+    else
+      stage2_v <= "sll"(stage2_v, 1);
+
+      stage2_v(0) <= stage1_v(3);
+
+      if (stage2_v(0) = '1') then
+         
+      elsif (stage2_v(1) = '1') then
+
+      elsif (stage2_v(2) = '1') then
+
+      elsif (stage2_v(3) = '1') then
+        valid <= '1';
+        edge_exists <= '0';
+        dir <= "000";
+      end if;
     end if;
   end process;
   o_edge <= edge_exists;
