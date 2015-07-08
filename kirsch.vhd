@@ -39,18 +39,15 @@ architecture main of kirsch is
   signal dir : std_logic_vector(2 downto 0);
   signal edge_exists : std_logic;
   signal valid : std_logic;
-  signal busy : std_logic;
 
+  signal received_pixels : unsigned(15 downto 0);
+  signal matrix_col, matrix_row : unsigned(7 downto 0);
   signal mem_wren : std_logic_vector(2 downto 0);
-
   subtype vec is unsigned(7 downto 0);
   type vec_vec is array (2 downto 0) of vec;
   signal mem_q : vec_vec;
 
-  signal matrix_col, matrix_row : unsigned(7 downto 0);
-  signal receivedNumbers : unsigned(15 downto 0);
-
-  signal row1pixel, row2pixel : unsigned(7 downto 0);  
+  signal row1_pixel, row2_pixel : unsigned(7 downto 0);  
 
   signal a, b, c, d, e, f, g, h, i : unsigned(9 downto 0);
 
@@ -71,7 +68,7 @@ architecture main of kirsch is
     return std_logic_vector(unsigned(a) sll n);
   end function;
 begin  
-  memory: for i in 0 to 2 generate
+  memory_generate: for i in 0 to 2 generate
     mem: entity work.mem(main)
     port map (
       address => std_logic_vector(matrix_col),
@@ -80,47 +77,61 @@ begin
       wren => mem_wren(i),
       unsigned(q) => mem_q(i)
     );
-  end generate;
+  end generate memory_generate;
 
-  memory_writing: process begin
+
+
+  memory_writing : process begin
     wait until rising_edge(i_clock);
     
     if (i_reset = '1') then
-      receivedNumbers <= X"0000";
+      received_pixels <= X"0000";
       mem_wren <= "001";
-      busy <= '0';
     elsif (i_valid = '1') then
-      receivedNumbers <= receivedNumbers + 1; 
-      busy <= '1'; 
+      received_pixels <= received_pixels + 1; 
 
       if (matrix_col = 255) then
         mem_wren <= "rol"(mem_wren, 1);
-        
-        if (matrix_row = 255) then
-          busy <= '0';
-        end if;
       end if;
     end if;
   end process;
-  matrix_col <= receivedNumbers (7 downto 0);
-  matrix_row <= receivedNumbers (15 downto 8);
+  matrix_col <= received_pixels (7 downto 0);
+  matrix_row <= received_pixels (15 downto 8);
   o_row <= std_logic_vector(matrix_row);
+
+
+
+  system_mode : process begin
+    wait until rising_edge(i_clock);
+
+    if (i_reset = '1') then
+      mode <= "01";
+    elsif (i_valid = '1') then
+      mode <= "11";
+    elsif ((stage2_v(3) = '1') and ((matrix_row = 255) and (matrix_col = 255))) then
+      mode <= "10";
+    else
+      mode <= "00";
+    end if; 
+  end process;
+  o_mode <= mode;
+
 
 
   get_pixel_from_memory : process(mem_q, mem_wren) begin
     case mem_wren is
       when "001" =>
-        row1pixel <= mem_q(1);
-        row2pixel <= mem_q(2);
+        row1_pixel <= mem_q(1);
+        row2_pixel <= mem_q(2);
       when "010" =>
-        row1pixel <= mem_q(2);
-        row2pixel <= mem_q(0);
+        row1_pixel <= mem_q(2);
+        row2_pixel <= mem_q(0);
       when "100" =>
-        row1pixel <= mem_q(0);
-        row2pixel <= mem_q(1);
+        row1_pixel <= mem_q(0);
+        row2_pixel <= mem_q(1);
       when others =>
-        row1pixel <= X"00";
-        row2pixel <= X"00"; 
+        row1_pixel <= X"00";
+        row2_pixel <= X"00"; 
     end case;
   end process;
 
@@ -137,27 +148,12 @@ begin
       g <= h;
       h <= i;
 
-      --add new stuff to the convulution table
-      c <= "00" & row1pixel;
-      f <= "00" & row2pixel;
+      c <= "00" & row1_pixel;
+      f <= "00" & row2_pixel;
       i <= "00" & unsigned(i_pixel);
     end if;
   end process;
 
-
-
-  system_mode : process begin
-    wait until rising_edge(i_clock);
- 
-    if (i_reset = '1') then 
-      mode <= "01";
-    elsif (busy = '1') then
-      mode <= "11";
-    else
-      mode <= "10";
-    end if;
-  end process;
-  o_mode <= mode;
 
 
   stage1 : process begin
