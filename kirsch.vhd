@@ -222,7 +222,6 @@ begin
         end if;
 
         stage1_sum <= g + h;
-
       end if;
     end if;
   end process;
@@ -266,15 +265,14 @@ begin
       stage3_v(0) <= stage2_v(0);
 
       if (stage3_v(0) = '1') then
-	      stage3_max(12 downto 3) <= stage2_max;
-	      stage3_max_dir <= stage2_max_dir;
+        stage3_max(12 downto 3) <= stage2_max;
+        stage3_max_dir <= stage2_max_dir;
 
       elsif ((stage3_v(1) = '1') or (stage3_v(3) = '1') or (stage3_v(2) = '1')) then
-	      if(stage2_max > (stage3_max(12 downto 3))) then
-		      stage3_max(12 downto 3) <= stage2_max;
-		      stage3_max_dir <= stage2_max_dir;
+        if(stage2_max > (stage3_max(12 downto 3))) then
+          stage3_max(12 downto 3) <= stage2_max;
+          stage3_max_dir <= stage2_max_dir;
       	end if;
-
       end if;
     end if;
   end process;
@@ -297,18 +295,18 @@ begin
 
       elsif (stage4_v(1) = '1') then
         stage4_max <= signed('0' & stage3_max) - stage4_max;
-	      stage4_max_dir <= stage3_max_dir;
+	stage4_max_dir <= stage3_max_dir;
       
       elsif (stage4_v(2) = '1') then
         valid <= '1';
 
         if(stage4_max > 383) then
-	        edge_exists <= '1';
-	        dir <= stage4_max_dir;
-	      else
-	        edge_exists <= '0';	
-	        dir <= "000";
-	      end if;
+	  edge_exists <= '1';
+	  dir <= stage4_max_dir;
+	else
+	  edge_exists <= '0';	
+	  dir <= "000";
+        end if;
       end if;
     end if;
   end process;
