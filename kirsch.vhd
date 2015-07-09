@@ -242,15 +242,11 @@ begin
       stage2_max <= ("00" & stage1_max) + ('0' & stage1_sum);
       stage2_max_dir <= stage1_max_dir;
 
-      case stage2_v is
-        when "0001" =>
+      if (stage2_v(0) <= '1') then
           stage2_sum <= "00" & stage1_sum; 
-
-        when "0010" | "0100" | "1000"  => 
+      else
           stage2_sum <= stage2_sum + ("00" & stage1_sum);
-
-        when others =>
-      end case;
+      end if;
     end if;
   end process;
 
@@ -268,7 +264,7 @@ begin
       if (stage3_v(0) = '1') then
         stage3_max <= stage2_max;
         stage3_max_dir <= stage2_max_dir;
-      elsif ((stage3_v(1) = '1') or (stage3_v(3) = '1') or (stage3_v(2) = '1')) then
+      else 
         if (stage2_max > stage3_max) then
           stage3_max <= stage2_max;
           stage3_max_dir <= stage2_max_dir;
