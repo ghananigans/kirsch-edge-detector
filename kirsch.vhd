@@ -41,6 +41,8 @@ architecture main of kirsch is
   type vec_vec is array (2 downto 0) of vec;
   signal mem_q : vec_vec;
 
+  signal busy : std_logic;
+
   signal row1_pixel, row2_pixel : unsigned(7 downto 0);  
 
   signal a, b, c, d, e, f, g, h, i : unsigned(7 downto 0);
@@ -95,15 +97,17 @@ begin
     if (i_reset = '1') then
       received_pixels <= X"0000";
       mem_wren <= "001";
+      o_row <= "00000000";
     elsif (i_valid = '1') then
       received_pixels <= received_pixels + 1; 
 
       if (received_pixels(7 downto 0) = 255) then
         mem_wren <= "rol"(mem_wren, 1);
       end if;
+    
+      o_row <= std_logic_vector(received_pixels(15 downto 8));
     end if;
   end process;
-  o_row <= std_logic_vector(received_pixels(15 downto 8));
 
 
 
@@ -112,12 +116,17 @@ begin
 
     if (i_reset = '1') then
       o_mode <= "01";
+      busy <= '0';
     elsif (i_valid = '1') then
+      busy <= '1';
       o_mode <= "11";
-    elsif ((stage2_v(3) = '1') and (received_pixels = 65535)) then
+    elsif (((stage3_v = "0000") and(stage4_v(1) = '1')) and (received_pixels = 0)) then
       o_mode <= "10";
+      busy <= '0';
+    elsif (busy = '1') then
+      o_mode <= "11";
     else
-      o_mode <= "00";
+      o_mode <= "10";
     end if; 
   end process;
 
