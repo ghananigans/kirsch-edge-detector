@@ -169,7 +169,7 @@ begin
     else
       stage1_v <= "sll"(stage1_v, 1);
       
-      if ((i_valid = '1') and ((received_pixels(7 downto 0) > 1) and (received_pixels(15 downto 8) > 1) ))  then
+      if ((i_valid = '1') and ((received_pixels(7 downto 1) /= "0000000") and (received_pixels(15 downto 9) /= "0000000")))  then
         stage1_v(0) <= '1';
       end if;
 
@@ -228,7 +228,9 @@ begin
       stage2_v <= "0000";
     else
       stage2_v <= "sll"(stage2_v, 1);
-      stage2_v(0) <= stage1_v(0);
+      if (stage1_v(0) = '1') then
+        stage2_v(0) <= '1';
+      end if;
 
       stage2_max <= ("00" & stage1_max) + ('0' & stage1_sum);
       stage2_max_dir <= stage1_max_dir;
@@ -250,7 +252,9 @@ begin
       stage3_v <= "0000";
     else
       stage3_v <= "sll"(stage3_v, 1);
-      stage3_v(0) <= stage2_v(0);
+      if (stage2_v(0) = '1') then
+        stage3_v(0) <= '1';
+      end if;
 
       if (stage3_v(0) = '1') then
         stage3_max <= stage2_max;
@@ -274,8 +278,10 @@ begin
       stage4_v <= "000";
     else
       stage4_v <= "sll"(stage4_v, 1);
-      stage4_v(0) <= stage2_v(3);
-      
+      if (stage2_v(3) = '1') then
+        stage4_v(0) <= '1';
+      end if;
+ 
       case stage4_v is
         when "001" =>
            stage4_max <= ('0' & stage2_sum & '0') + ("00" & stage2_sum);
