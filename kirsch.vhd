@@ -289,24 +289,25 @@ begin
         when "010" =>
           stage4_max <= (stage3_max & "000") - stage4_max;
           stage4_max_dir <= stage3_max_dir;
-      
-        when "100" =>
           o_valid <= '1';
+        when "100" =>
+          --o_valid <= '1';
 
-          if (stage4_max > 383) then
-            o_edge <= '1';
-            o_dir <= stage4_max_dir;
-          else
-	    o_edge <= '0';	
-	    o_dir <= "000";
-          end if;
+          --if (stage4_max > 383) then
+            --o_edge <= '1';
+            --o_dir <= stage4_max_dir;
+          --else
+	    --o_edge <= '0';	
+	    --o_dir <= "000";
+          --end if;
 
         when others =>
       end case;
     end if;
   end process;
 
-
+  o_edge <= '1' when stage4_max > 383 else '0';
+  o_dir <= stage4_max_dir when stage4_max > 383 else "000";
 
   debug_num_5 <= X"E";
   debug_num_4 <= X"C";
