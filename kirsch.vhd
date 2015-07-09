@@ -174,47 +174,49 @@ begin
         stage1_v(0) <= '1';
       end if;
 
-      if (stage1_v(0) = '1') then
-        if (b > g) then
-          stage1_max <= b;
-          stage1_max_dir <= "100";
-        else
-          stage1_max <= g;
-          stage1_max_dir <= "001";
-        end if;
+      case stage1_v is
+        when "0001" =>
+          if (b > g) then
+            stage1_max <= b;
+            stage1_max_dir <= "100";
+          else
+            stage1_max <= g;
+            stage1_max_dir <= "001";
+          end if;
+          stage1_sum <= ('0' & d) + ('0' & a);
 
-        stage1_sum <= ('0' & d) + ('0' & a);
-      elsif (stage1_v(1) = '1') then
-        if (f > a) then
-          stage1_max <= f;
-          stage1_max_dir <= "110";
-        else
-          stage1_max <= a;
-          stage1_max_dir <= "010";
-        end if;
+        when "0010" =>
+          if (f > a) then
+            stage1_max <= f;
+            stage1_max_dir <= "110";
+          else
+            stage1_max <= a;
+            stage1_max_dir <= "010";
+          end if;
+          stage1_sum <= ('0' & c) + ('0' & b);
 
-        stage1_sum <= ('0' & c) + ('0' & b);
-      elsif (stage1_v(2) = '1') then
-        if (h > c) then
-          stage1_max <= h;
-          stage1_max_dir <= "101";
-        else
-          stage1_max <= c;
-          stage1_max_dir <= "000";
-        end if;
+        when "0100" =>
+          if (h > c) then
+            stage1_max <= h;
+            stage1_max_dir <= "101";
+          else
+            stage1_max <= c;
+            stage1_max_dir <= "000";
+          end if;
+          stage1_sum <= ('0' & f) + ('0' & i);
+        
+        when "1000" =>
+          if (d > i) then
+            stage1_max <= d;
+            stage1_max_dir <= "111";
+          else
+            stage1_max <= i;
+            stage1_max_dir <= "011";
+          end if;
+          stage1_sum <= ('0' & g) + ('0' & h);
 
-        stage1_sum <= ('0' & f) + ('0' & i);
-      elsif (stage1_v(3) = '1') then
-        if (d > i) then
-          stage1_max <= d;
-          stage1_max_dir <= "111";
-        else
-          stage1_max <= i;
-          stage1_max_dir <= "011";
-        end if;
-
-        stage1_sum <= ('0' & g) + ('0' & h);
-      end if;
+        when others =>
+      end case;
     end if;
   end process;
 
@@ -232,11 +234,15 @@ begin
       stage2_max <= ("00" & stage1_max) + ('0' & stage1_sum);
       stage2_max_dir <= stage1_max_dir;
 
-      if (stage2_v(0) = '1') then
-        stage2_sum <= "00" & stage1_sum; 
-      elsif ((stage2_v(1) = '1') or (stage2_v(2) = '1') or (stage2_v(3) = '1')) then
-       stage2_sum <= stage2_sum + ("00" & stage1_sum);
-      end if;
+      case stage2_v is
+        when "0001" =>
+          stage2_sum <= "00" & stage1_sum; 
+       
+        when "0010" | "0100" | "1000"  => 
+         stage2_sum <= stage2_sum + ("00" & stage1_sum);
+  
+        when others =>
+      end case;
     end if;
   end process;
 
@@ -277,24 +283,27 @@ begin
       stage4_v <= "sll"(stage4_v, 1);
       stage4_v(0) <= stage2_v(3);
       
-      if (stage4_v(0) = '1') then
-         stage4_max <= ('0' & stage2_sum & '0') + ("00" & stage2_sum);
+      case stage4_v is
+        when "001" =>
+          stage4_max <= ('0' & stage2_sum & '0') + ("00" & stage2_sum);
 
-      elsif (stage4_v(1) = '1') then
-        stage4_max <= stage3_max - stage4_max;
-	stage4_max_dir <= stage3_max_dir;
+        when "010" =>
+          stage4_max <= stage3_max - stage4_max;
+          stage4_max_dir <= stage3_max_dir;
  
-      elsif (stage4_v(2) = '1') then
-        o_valid <= '1';
+        when "100" =>
+          o_valid <= '1';
 
-        if (stage4_max > 383) then
-	  o_edge <= '1';
-	  o_dir <= stage4_max_dir;
-	else
-	  o_edge <= '0';	
-	  o_dir <= "000";
-        end if;
-      end if;
+          if (stage4_max > 383) then
+            o_edge <= '1';
+  	    o_dir <= stage4_max_dir;
+	  else
+	    o_edge <= '0';	
+	    o_dir <= "000";
+          end if;
+
+        when others =>   
+      end case;
     end if;
   end process;
 
