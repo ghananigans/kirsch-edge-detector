@@ -36,7 +36,6 @@ end entity;
 
 architecture main of kirsch is
   signal received_pixels : unsigned(15 downto 0);
-  --signal matrix_col, matrix_row : unsigned(7 downto 0);
   signal mem_wren : std_logic_vector(2 downto 0);
   subtype vec is unsigned(7 downto 0);
   type vec_vec is array (2 downto 0) of vec;
@@ -57,7 +56,7 @@ architecture main of kirsch is
   signal stage2_max_dir : std_logic_vector (2 downto 0);
   signal stage2_sum : unsigned(10 downto 0);
 
-  signal stage3_max : unsigned (12 downto 0);
+  signal stage3_max : unsigned (9 downto 0);
   signal stage3_max_dir : std_logic_vector (2 downto 0);
  
   signal stage4_max : unsigned (12 downto 0);
@@ -170,51 +169,53 @@ begin
     else
       stage1_v <= "sll"(stage1_v, 1);
       
-      if ((i_valid = '1') and ((received_pixels(15 downto 8) > 1) and (received_pixels(7 downto 0) > 1)) )  then
+      if ((i_valid = '1') and ((received_pixels(7 downto 0) > 1) and (received_pixels(15 downto 8) > 1) ))  then
         stage1_v(0) <= '1';
       end if;
 
-      if (stage1_v(0) = '1') then
-        if (b > g) then
-          stage1_max <= b;
-          stage1_max_dir <= "100";
-        else
-          stage1_max <= g;
-          stage1_max_dir <= "001";
-        end if;
+      case stage1_v is
+        when "0001" =>
+          if (b > g) then
+            stage1_max <= b;
+            stage1_max_dir <= "100";
+          else
+            stage1_max <= g;
+            stage1_max_dir <= "001";
+          end if;
+          stage1_sum <= ('0' & d) + ('0' & a);
+     
+        when "0010" =>
+          if (f > a) then
+            stage1_max <= f;
+            stage1_max_dir <= "110";
+          else
+            stage1_max <= a;
+            stage1_max_dir <= "010";
+          end if;
+          stage1_sum <= ('0' & c) + ('0' & b);
+         
+        when "0100" =>
+          if (h > c) then
+            stage1_max <= h;
+            stage1_max_dir <= "101";
+          else
+            stage1_max <= c;
+            stage1_max_dir <= "000";
+          end if;
+          stage1_sum <= ('0' & f) + ('0' & i);
 
-        stage1_sum <= ('0' & d) + ('0' & a);
-      elsif (stage1_v(1) = '1') then
-        if (f > a) then
-          stage1_max <= f;
-          stage1_max_dir <= "110";
-        else
-          stage1_max <= a;
-          stage1_max_dir <= "010";
-        end if;
+        when "1000" =>
+          if (d > i) then
+            stage1_max <= d;
+            stage1_max_dir <= "111";
+          else
+            stage1_max <= i;
+            stage1_max_dir <= "011";
+          end if;
+          stage1_sum <= ('0' & g) + ('0' & h);
 
-        stage1_sum <= ('0' & c) + ('0' & b);
-      elsif (stage1_v(2) = '1') then
-        if (h > c) then
-          stage1_max <= h;
-          stage1_max_dir <= "101";
-        else
-          stage1_max <= c;
-          stage1_max_dir <= "000";
-        end if;
-
-        stage1_sum <= ('0' & f) + ('0' & i);
-      elsif (stage1_v(3) = '1') then
-        if (d > i) then
-          stage1_max <= d;
-          stage1_max_dir <= "111";
-        else
-          stage1_max <= i;
-          stage1_max_dir <= "011";
-        end if;
-
-        stage1_sum <= ('0' & g) + ('0' & h);
-      end if;
+        when others =>
+      end case;
     end if;
   end process;
 
@@ -247,18 +248,17 @@ begin
 
     if (i_reset = '1') then
       stage3_v <= "0000";
-      stage3_max(2 downto 0) <= "000";
     else
       stage3_v <= "sll"(stage3_v, 1);
       stage3_v(0) <= stage2_v(0);
 
       if (stage3_v(0) = '1') then
-        stage3_max(12 downto 3) <= stage2_max;
+        stage3_max <= stage2_max;
         stage3_max_dir <= stage2_max_dir;
 
       elsif ((stage3_v(1) = '1') or (stage3_v(3) = '1') or (stage3_v(2) = '1')) then
-        if(stage2_max > (stage3_max(12 downto 3))) then
-          stage3_max(12 downto 3) <= stage2_max;
+        if(stage2_max > stage3_max) then
+          stage3_max <= stage2_max;
           stage3_max_dir <= stage2_max_dir;
       	end if;
       end if;
@@ -277,24 +277,27 @@ begin
       stage4_v <= "sll"(stage4_v, 1);
       stage4_v(0) <= stage2_v(3);
       
-      if (stage4_v(0) = '1') then
-         stage4_max <= ('0' & stage2_sum & '0') + ("00" & stage2_sum);
+      case stage4_v is
+        when "001" =>
+           stage4_max <= ('0' & stage2_sum & '0') + ("00" & stage2_sum);
 
-      elsif (stage4_v(1) = '1') then
-        stage4_max <= stage3_max - stage4_max;
-	stage4_max_dir <= stage3_max_dir;
+        when "010" =>
+          stage4_max <= (stage3_max & "000") - stage4_max;
+          stage4_max_dir <= stage3_max_dir;
       
-      elsif (stage4_v(2) = '1') then
-        o_valid <= '1';
+        when "100" =>
+          o_valid <= '1';
 
-        if (stage4_max > 383) then
-	  o_edge <= '1';
-	  o_dir <= stage4_max_dir;
-	else
-	  o_edge <= '0';	
-	  o_dir <= "000";
-        end if;
-      end if;
+          if (stage4_max > 383) then
+            o_edge <= '1';
+            o_dir <= stage4_max_dir;
+          else
+	    o_edge <= '0';	
+	    o_dir <= "000";
+          end if;
+
+        when others =>
+      end case;
     end if;
   end process;
 
