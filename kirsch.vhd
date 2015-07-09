@@ -170,7 +170,7 @@ begin
     else
       stage1_v <= "sll"(stage1_v, 1);
       
-      if ((i_valid = '1') and ((received_pixels(15 downto 8) > 1) and (received_pixels(7 downto 0) > 1)) )  then
+      if ((i_valid = '1') and ((received_pixels(7 downto 2) > 0) and (received_pixels(15 downto 9) > 0)))  then
         stage1_v(0) <= '1';
       end if;
 
@@ -283,7 +283,7 @@ begin
       elsif (stage4_v(1) = '1') then
         stage4_max <= stage3_max - stage4_max;
 	stage4_max_dir <= stage3_max_dir;
-      
+ 
       elsif (stage4_v(2) = '1') then
         o_valid <= '1';
 
