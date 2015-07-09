@@ -308,14 +308,14 @@ begin
 
   debug_num_5 <= X"E";
   debug_num_4 <= X"C";
-  debug_num_3 <= X"E";
-  debug_num_2 <= X"3";
-  debug_num_1 <= X"2";
-  debug_num_0 <= X"7";
-  --debug_num_3 <= received_pixels(15 downto 12);
-  --debug_num_2 <= received_pixels(11 downto 8);
-  --debug_num_1 <= received_pixels(7 downto 4);
-  --debug_num_0 <= received_pixels(3 downto 0);
+  --debug_num_3 <= X"E";
+  --debug_num_2 <= X"3";
+  --debug_num_1 <= X"2";
+  --debug_num_0 <= X"7";
+  debug_num_3 <= std_logic_vector(received_pixels(15 downto 12));
+  debug_num_2 <= std_logic_vector(received_pixels(11 downto 8));
+  debug_num_1 <= std_logic_vector(received_pixels(7 downto 4));
+  debug_num_0 <= std_logic_vector(received_pixels(3 downto 0));
 
   debug_led_red <= (others => '0');
   debug_led_grn <= (others => '0');
