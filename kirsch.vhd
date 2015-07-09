@@ -61,7 +61,7 @@ architecture main of kirsch is
   signal stage3_max : unsigned (9 downto 0);
   signal stage3_max_dir : std_logic_vector (2 downto 0);
  
-  signal stage4_max : unsigned (12 downto 0);
+  signal stage4_max : signed (13 downto 0);
   signal stage4_max_dir : std_logic_vector (2 downto 0);
 
   function "rol" (a : std_logic_vector; n : natural)
@@ -292,10 +292,10 @@ begin
  
       case stage4_v is
         when "001" =>
-           stage4_max <= ('0' & stage2_sum & '0') + ("00" & stage2_sum);
+           stage4_max <= signed(("00" & (stage2_sum & '0')) + ("000" & stage2_sum));
 
         when "010" =>
-          stage4_max <= (stage3_max & "000") - stage4_max;
+          stage4_max <= signed('0' & (stage3_max & "000")) - stage4_max;
           stage4_max_dir <= stage3_max_dir;
 
         when others =>
