@@ -40,6 +40,7 @@ architecture main of kirsch is
   subtype vec is unsigned(7 downto 0);
   type vec_vec is array (2 downto 0) of vec;
   signal mem_q : vec_vec;
+  signal busy : std_logic;
 
   signal row1_pixel, row2_pixel : unsigned(7 downto 0);  
 
@@ -112,12 +113,19 @@ begin
 
     if (i_reset = '1') then
       o_mode <= "01";
-    elsif (i_valid = '1') then
-      o_mode <= "11";
-    elsif ((stage2_v(3) = '1') and (received_pixels = 65535)) then
-      o_mode <= "10";
     else
-      o_mode <= "00";
+      if (busy = '1') then
+        o_mode <= "11"; 
+      elsif (i_valid = '1') then
+        o_mode <= "11";
+        busy <= '1';
+      else
+        o_mode <= "10";
+      end if;
+
+      if ((received_pixels = 65535) and (stage4_v(2) = '1')) then
+        busy <= '0';
+      end if;
     end if; 
   end process;
 
@@ -153,6 +161,7 @@ begin
       g <= h;
       h <= i;
 
+      --new pixel loaded into convolution table
       c <= row1_pixel;
       f <= row2_pixel;
       i <= unsigned(i_pixel);
