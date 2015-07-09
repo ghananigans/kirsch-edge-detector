@@ -282,7 +282,7 @@ begin
   stage4 : process begin
     wait until rising_edge(i_clock);
 
-    o_valid <= '0';
+    --o_valid <= '0';
     if (i_reset = '1') then
       stage4_v <= "000";
     else
@@ -298,7 +298,7 @@ begin
         when "010" =>
           stage4_max <= (stage3_max & "000") - stage4_max;
           stage4_max_dir <= stage3_max_dir;
-          o_valid <= '1';
+          --o_valid <= '1';
         when "100" =>
           --o_valid <= '1';
 
@@ -314,7 +314,7 @@ begin
       end case;
     end if;
   end process;
-
+  o_valid <= stage4_v(2);
   o_edge <= '1' when stage4_max > 383 else '0';
   o_dir <= stage4_max_dir when stage4_max > 383 else "000";
 
@@ -324,6 +324,10 @@ begin
   debug_num_2 <= X"3";
   debug_num_1 <= X"2";
   debug_num_0 <= X"7";
+  --debug_num_3 <= received_pixels(15 downto 12);
+  --debug_num_2 <= received_pixels(11 downto 8);
+  --debug_num_1 <= received_pixels(7 downto 4);
+  --debug_num_0 <= received_pixels(3 downto 0);
 
   debug_led_red <= (others => '0');
   debug_led_grn <= (others => '0');
