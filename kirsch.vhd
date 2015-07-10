@@ -247,7 +247,7 @@ begin
       if (stage2_v(0) = '1') then
         stage2_sum <= "00" & stage1_sum; 
       else
-       stage2_sum <= stage2_sum + ("00" & stage1_sum);
+        stage2_sum <= stage2_sum + ("00" & stage1_sum);
       end if;
     end if;
   end process;
@@ -282,6 +282,8 @@ begin
   stage4 : process begin
     wait until rising_edge(i_clock);
 
+    stage4_max_dir <= stage3_max_dir;
+
     if (i_reset = '1') then
       stage4_v <= "000";
     else
@@ -289,17 +291,12 @@ begin
       if (stage2_v(3) = '1') then
         stage4_v(0) <= '1';
       end if;
- 
-      case stage4_v is
-        when "001" =>
-           stage4_max <= signed(("00" & (stage2_sum & '0')) + ("000" & stage2_sum));
-
-        when "010" =>
-          stage4_max <= signed('0' & (stage3_max & "000")) - stage4_max;
-          stage4_max_dir <= stage3_max_dir;
-
-        when others =>
-      end case;
+    
+      if (stage4_v(0) = '1') then 
+        stage4_max <= signed(("00" & (stage2_sum & '0')) + ("000" & stage2_sum));
+      else 
+        stage4_max <= signed('0' & (stage3_max & "000")) - stage4_max;
+      end if;
     end if;
   end process;
   o_valid <= stage4_v(2);
