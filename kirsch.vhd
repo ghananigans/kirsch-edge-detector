@@ -40,6 +40,7 @@ architecture main of kirsch is
   subtype vec is unsigned(7 downto 0);
   type vec_vec is array (2 downto 0) of vec;
   signal mem_q : vec_vec;
+  signal tmp : std_logic;
 
   signal busy : std_logic;
 
@@ -254,13 +255,13 @@ begin
       stage3_max <= stage2_max;
       stage3_max_dir <= stage2_max_dir;
     else
-      if(stage2_max > stage3_max) then
+      if(tmp = '1') then
         stage3_max <= stage2_max;
         stage3_max_dir <= stage2_max_dir;
       end if;
     end if;
   end process;
-
+  tmp <= '1' when (stage2_max > stage3_max) else '0';  
 
 
   stage4 : process begin
