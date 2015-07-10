@@ -139,12 +139,12 @@ begin
       when "010" =>
         row1_pixel <= mem_q(2);
         row2_pixel <= mem_q(0);
-      when "100" =>
+      when others =>
         row1_pixel <= mem_q(0);
         row2_pixel <= mem_q(1);
-      when others =>
-        row1_pixel <= X"00";
-        row2_pixel <= X"00"; 
+--      when others =>
+--        row1_pixel <= X"00";
+--        row2_pixel <= X"00"; 
     end case;
   end process;
 
