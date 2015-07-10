@@ -47,8 +47,7 @@ architecture main of kirsch is
 
   signal a, b, c, d, e, f, g, h, i : unsigned(7 downto 0);
 
-  signal stage1_v, stage2_v, stage3_v : std_logic_vector(3 downto 0); 
-  signal stage4_v : std_logic_vector(2 downto 0);
+  signal stages_v : std_logic_vector(7 downto 0); 
 
   signal stage1_max : unsigned (7 downto 0);
   signal stage1_max_dir : std_logic_vector (2 downto 0);
@@ -120,7 +119,7 @@ begin
     elsif (i_valid = '1') then
       busy <= '1';
       o_mode <= "11";
-    elsif (((stage3_v = "0000") and(stage4_v(1) = '1')) and (received_pixels = 0)) then
+    elsif (((stages_v(3 downto 0) = "0000") and(stages_v(6) = '1')) and (received_pixels = 0)) then
       o_mode <= "10";
       busy <= '0';
     elsif (busy = '1') then
@@ -169,63 +168,66 @@ begin
   end process;
 
 
+ 
+  stages : process begin
+    wait until rising_edge(i_clock);
+
+    stages_v <= "sll"(stages_v, 1);
+
+    if (i_reset = '1') then
+      stages_v <= "00000000";
+    elsif ((i_valid = '1') and ((received_pixels(7 downto 1) /= "0000000") and (received_pixels(15 downto 9) /= "0000000")))  then
+      stages_v(0) <= '1';
+    end if;
+  end process;
+
 
   stage1 : process begin
     wait until rising_edge(i_clock);
     
-    if (i_reset = '1') then
-      stage1_v <= "0000";
-    else
-      stage1_v <= "sll"(stage1_v, 1);
-      
-      if ((i_valid = '1') and ((received_pixels(7 downto 1) /= "0000000") and (received_pixels(15 downto 9) /= "0000000")))  then
-        stage1_v(0) <= '1';
-      end if;
-
-      case stage1_v is
-        when "0001" =>
-          if (b > g) then
-            stage1_max <= b;
-            stage1_max_dir <= "100";
-          else
-            stage1_max <= g;
-            stage1_max_dir <= "001";
-          end if;
-          stage1_sum <= ('0' & d) + ('0' & a);
+    case stages_v(3 downto 0) is
+      when "0001" =>
+        if (b > g) then
+          stage1_max <= b;
+          stage1_max_dir <= "100";
+        else
+          stage1_max <= g;
+          stage1_max_dir <= "001";
+        end if;
+        stage1_sum <= ('0' & d) + ('0' & a);
      
-        when "0010" =>
-          if (f > a) then
-            stage1_max <= f;
-            stage1_max_dir <= "110";
-          else
-            stage1_max <= a;
-            stage1_max_dir <= "010";
-          end if;
-          stage1_sum <= ('0' & c) + ('0' & b);
+      when "0010" =>
+        if (f > a) then
+          stage1_max <= f;
+          stage1_max_dir <= "110";
+        else
+          stage1_max <= a;
+          stage1_max_dir <= "010";
+        end if;
+        stage1_sum <= ('0' & c) + ('0' & b);
          
-        when "0100" =>
-          if (h > c) then
-            stage1_max <= h;
-            stage1_max_dir <= "101";
-          else
-            stage1_max <= c;
-            stage1_max_dir <= "000";
-          end if;
-          stage1_sum <= ('0' & f) + ('0' & i);
+      when "0100" =>
+        if (h > c) then
+          stage1_max <= h;
+          stage1_max_dir <= "101";
+        else
+          stage1_max <= c;
+          stage1_max_dir <= "000";
+        end if;
+        stage1_sum <= ('0' & f) + ('0' & i);
 
-        when "1000" =>
-          if (d > i) then
-            stage1_max <= d;
-            stage1_max_dir <= "111";
-          else
-            stage1_max <= i;
-            stage1_max_dir <= "011";
-          end if;
-          stage1_sum <= ('0' & g) + ('0' & h);
+      when "1000" =>
+        if (d > i) then
+          stage1_max <= d;
+          stage1_max_dir <= "111";
+        else
+          stage1_max <= i;
+          stage1_max_dir <= "011";
+        end if;
+        stage1_sum <= ('0' & g) + ('0' & h);
 
-        when others =>
-      end case;
-    end if;
+      when others =>
+    end case;
   end process;
 
 
@@ -233,22 +235,13 @@ begin
   stage2 : process begin
     wait until rising_edge(i_clock);
     
-    if (i_reset = '1') then
-      stage2_v <= "0000";
+    stage2_max <= ("00" & stage1_max) + ('0' & stage1_sum);
+    stage2_max_dir <= stage1_max_dir;
+
+    if (stages_v(1) = '1') then
+      stage2_sum <= "00" & stage1_sum; 
     else
-      stage2_v <= "sll"(stage2_v, 1);
-      if (stage1_v(0) = '1') then
-        stage2_v(0) <= '1';
-      end if;
-
-      stage2_max <= ("00" & stage1_max) + ('0' & stage1_sum);
-      stage2_max_dir <= stage1_max_dir;
-
-      if (stage2_v(0) = '1') then
-        stage2_sum <= "00" & stage1_sum; 
-      else
-        stage2_sum <= stage2_sum + ("00" & stage1_sum);
-      end if;
+      stage2_sum <= stage2_sum + ("00" & stage1_sum);
     end if;
   end process;
 
@@ -257,22 +250,13 @@ begin
   stage3 : process begin
     wait until rising_edge(i_clock);
 
-    if (i_reset = '1') then
-      stage3_v <= "0000";
+    if (stages_v(2) = '1') then
+      stage3_max <= stage2_max;
+      stage3_max_dir <= stage2_max_dir;
     else
-      stage3_v <= "sll"(stage3_v, 1);
-      if (stage2_v(0) = '1') then
-        stage3_v(0) <= '1';
-      end if;
-
-      if (stage3_v(0) = '1') then
+      if(stage2_max > stage3_max) then
         stage3_max <= stage2_max;
         stage3_max_dir <= stage2_max_dir;
-      else
-        if(stage2_max > stage3_max) then
-          stage3_max <= stage2_max;
-          stage3_max_dir <= stage2_max_dir;
-      	end if;
       end if;
     end if;
   end process;
@@ -284,22 +268,13 @@ begin
 
     stage4_max_dir <= stage3_max_dir;
 
-    if (i_reset = '1') then
-      stage4_v <= "000";
-    else
-      stage4_v <= "sll"(stage4_v, 1);
-      if (stage2_v(3) = '1') then
-        stage4_v(0) <= '1';
-      end if;
-    
-      if (stage4_v(0) = '1') then 
-        stage4_max <= signed(("00" & (stage2_sum & '0')) + ("000" & stage2_sum));
-      else 
-        stage4_max <= signed('0' & (stage3_max & "000")) - stage4_max;
-      end if;
+    if (stages_v(5) = '1') then 
+      stage4_max <= signed(("00" & (stage2_sum & '0')) + ("000" & stage2_sum));
+    else 
+      stage4_max <= signed('0' & (stage3_max & "000")) - stage4_max;
     end if;
   end process;
-  o_valid <= stage4_v(2);
+  o_valid <= stages_v(7);
   o_edge <= '1' when (stage4_max > 383) else '0';
   o_dir <= stage4_max_dir when (stage4_max > 383) else "000";
 
