@@ -182,8 +182,8 @@ begin
   stage1 : process begin
     wait until rising_edge(i_clock);
     
-    case stages_v(3 downto 0) is
-      when "0001" =>
+    case stages_v(2 downto 0) is
+      when "001" =>
         if (b > g) then
           stage1_max <= b;
           stage1_max_dir <= "100";
@@ -193,7 +193,7 @@ begin
         end if;
         stage1_sum <= ('0' & d) + ('0' & a);
      
-      when "0010" =>
+      when "010" =>
         if (f > a) then
           stage1_max <= f;
           stage1_max_dir <= "110";
@@ -203,7 +203,7 @@ begin
         end if;
         stage1_sum <= ('0' & c) + ('0' & b);
          
-      when "0100" =>
+      when "100" =>
         if (h > c) then
           stage1_max <= h;
           stage1_max_dir <= "101";
@@ -213,7 +213,7 @@ begin
         end if;
         stage1_sum <= ('0' & f) + ('0' & i);
 
-      when "1000" =>
+      when others =>
         if (d > i) then
           stage1_max <= d;
           stage1_max_dir <= "111";
@@ -223,7 +223,6 @@ begin
         end if;
         stage1_sum <= ('0' & g) + ('0' & h);
 
-      when others =>
     end case;
   end process;
 
